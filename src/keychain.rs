@@ -8,12 +8,13 @@ use core_foundation::{
 };
 
 use security_framework_sys::{
-    base::errSecSuccess,
     item::{
         kSecClass, kSecClassGenericPassword, kSecMatchLimit, kSecReturnAttributes, kSecReturnData,
     },
     keychain_item::SecItemCopyMatching,
 };
+
+use crate::error::{check_result, Error};
 
 // TODO: remove after update to security-framework 2.5.0
 extern "C" {
@@ -22,7 +23,10 @@ extern "C" {
     pub static kSecValueData: CFStringRef;
 }
 
-pub fn search(service: &str, account: Option<&str>) -> CFDictionary<CFString, CFType> {
+pub fn search(
+    service: &str,
+    account: Option<&str>,
+) -> Result<CFDictionary<CFString, CFType>, Error> {
     unsafe {
         let mut query = query(service, account);
 
@@ -44,13 +48,9 @@ pub fn search(service: &str, account: Option<&str>) -> CFDictionary<CFString, CF
         let query = CFDictionary::from_CFType_pairs(&query);
 
         let mut ret = std::ptr::null();
-        let result = SecItemCopyMatching(query.as_concrete_TypeRef(), &mut ret);
+        check_result(SecItemCopyMatching(query.as_concrete_TypeRef(), &mut ret))?;
 
-        if result != errSecSuccess {
-            unimplemented!()
-        }
-
-        CFDictionary::wrap_under_get_rule(ret as *mut _)
+        Ok(CFDictionary::wrap_under_get_rule(ret as *mut _))
     }
 }
 
