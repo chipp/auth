@@ -1,4 +1,5 @@
 mod credentials;
+mod error;
 mod keychain;
 mod token;
 

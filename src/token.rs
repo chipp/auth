@@ -1,12 +1,12 @@
 use core_foundation::{base::TCFType, data::CFData, dictionary::CFDictionary, string::CFString};
 use rpassword::prompt_password_stdout;
 
-use security_framework_sys::{
-    base::errSecSuccess,
-    keychain_item::{SecItemAdd, SecItemDelete},
-};
+use security_framework_sys::keychain_item::{SecItemAdd, SecItemDelete};
 
-use crate::keychain::{find_string_value, kSecValueData, query, search};
+use crate::{
+    error::check_result,
+    keychain::{find_string_value, kSecValueData, query, search},
+};
 
 pub fn token(service: &str, token_name: &str) -> String {
     if let Some(token) = find_token_in_keychain(service, token_name) {
@@ -18,7 +18,7 @@ pub fn token(service: &str, token_name: &str) -> String {
 
 fn find_token_in_keychain(service: &str, token_name: &str) -> Option<String> {
     unsafe {
-        let result = search(service, Some(token_name));
+        let result = search(service, Some(token_name)).ok()?;
 
         let value_data_key = CFString::wrap_under_get_rule(kSecValueData);
         let password = find_string_value(&result, &value_data_key)?;
@@ -38,10 +38,10 @@ fn request_token_from_user(service: &str, token_name: &str) -> String {
 
     let params = CFDictionary::from_CFType_pairs(&query);
     let mut ret = std::ptr::null();
-    let status = unsafe { SecItemAdd(params.as_concrete_TypeRef(), &mut ret) };
 
-    if status != errSecSuccess {
-        panic!("unable to save credentials to keychain");
+    if let Err(error) = check_result(unsafe { SecItemAdd(params.as_concrete_TypeRef(), &mut ret) })
+    {
+        debug_assert!(true, "unable to save credentials to keychain: {}", error);
     }
 
     password
@@ -51,8 +51,8 @@ pub fn reset_token(service: &str, token_name: &str) {
     let query = query(service, Some(token_name));
     let params = CFDictionary::from_CFType_pairs(&query);
 
-    if unsafe { SecItemDelete(params.as_concrete_TypeRef()) } != errSecSuccess {
-        panic!("unable to remove credentials from keychain");
+    if let Err(error) = check_result(unsafe { SecItemDelete(params.as_concrete_TypeRef()) }) {
+        debug_assert!(true, "unable to save credentials to keychain: {}", error);
     }
 }
 

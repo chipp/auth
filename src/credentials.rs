@@ -2,9 +2,9 @@ use core_foundation::{base::TCFType, data::CFData, dictionary::CFDictionary, str
 
 use rpassword::prompt_password_stdout;
 
-use security_framework_sys::base::errSecSuccess;
 use security_framework_sys::keychain_item::{SecItemAdd, SecItemDelete};
 
+use crate::error::check_result;
 use crate::keychain::{find_string_value, kSecAttrAccount, kSecValueData, query, search};
 
 pub fn user_and_password(service: &str) -> (String, String) {
@@ -17,7 +17,7 @@ pub fn user_and_password(service: &str) -> (String, String) {
 
 fn find_credentials_in_keychain(service: &str) -> Option<(String, String)> {
     unsafe {
-        let result = search(service, None);
+        let result = search(service, None).ok()?;
 
         let account_key = CFString::wrap_under_get_rule(kSecAttrAccount);
         let value_data_key = CFString::wrap_under_get_rule(kSecValueData);
@@ -41,10 +41,10 @@ fn request_credentials_from_user(service: &str) -> (String, String) {
 
     let params = CFDictionary::from_CFType_pairs(&query);
     let mut ret = std::ptr::null();
-    let status = unsafe { SecItemAdd(params.as_concrete_TypeRef(), &mut ret) };
 
-    if status != errSecSuccess {
-        panic!("unable to save credentials to keychain");
+    if let Err(error) = check_result(unsafe { SecItemAdd(params.as_concrete_TypeRef(), &mut ret) })
+    {
+        debug_assert!(true, "unable to save credentials to keychain: {}", error);
     }
 
     (username, password)
@@ -54,8 +54,8 @@ pub fn reset_user_and_pass(service: &str) {
     let query = query(service, None);
     let params = CFDictionary::from_CFType_pairs(&query);
 
-    if unsafe { SecItemDelete(params.as_concrete_TypeRef()) } != errSecSuccess {
-        panic!("unable to remove credentials from keychain");
+    if let Err(error) = check_result(unsafe { SecItemDelete(params.as_concrete_TypeRef()) }) {
+        debug_assert!(true, "unable to save credentials to keychain: {}", error);
     }
 }
 
