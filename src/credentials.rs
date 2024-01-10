@@ -1,6 +1,6 @@
 use core_foundation::{base::TCFType, data::CFData, dictionary::CFDictionary, string::CFString};
 
-use rpassword::prompt_password_stdout;
+use rpassword::prompt_password;
 
 use security_framework_sys::keychain_item::{SecItemAdd, SecItemDelete};
 
@@ -70,5 +70,5 @@ fn request_username(service: &str) -> String {
 }
 
 fn request_password(service: &str) -> String {
-    prompt_password_stdout(&format!("{} password: ", service)).unwrap()
+    prompt_password(&format!("{} password: ", service)).unwrap()
 }

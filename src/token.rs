@@ -1,5 +1,5 @@
 use core_foundation::{base::TCFType, data::CFData, dictionary::CFDictionary, string::CFString};
-use rpassword::prompt_password_stdout;
+use rpassword::prompt_password;
 
 use security_framework_sys::keychain_item::{SecItemAdd, SecItemDelete};
 
@@ -57,5 +57,5 @@ pub fn reset_token(service: &str, token_name: &str) {
 }
 
 fn request_token(service: &str, token_name: &str) -> String {
-    prompt_password_stdout(&format!("Enter {} {}: ", service, token_name)).unwrap()
+    prompt_password(&format!("Enter {} {}: ", service, token_name)).unwrap()
 }
