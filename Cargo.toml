@@ -1,6 +1,9 @@
 [package]
-name = "auth"
+name = "chipp_auth"
 version = "2.1.0"
+description = "macOS library for storing credentials in keychain"
+repository = "https://github.com/chipp/auth"
+license = "MIT"
 authors = ["Vladimir Burdukov <chippcheg@gmail.com>"]
 edition = "2021"
 
@@ -8,6 +11,3 @@ edition = "2021"
 security-framework-sys = { version = "2.9", default-features = false }
 core-foundation = "0.9.4"
 rpassword = "7.3"
-
-[dev-dependencies]
-dirs = "5.0"
